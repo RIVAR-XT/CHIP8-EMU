@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <time.h>
 
 typedef struct {
     uint8_t reg[16];
@@ -13,6 +14,7 @@ typedef struct {
     uint8_t keypad[16];
     uint32_t video_gfx[64 * 32];
     uint16_t opcode;
+    uint32_t randnum;
 } CHIP8;
 
 //start adresses 
@@ -32,7 +34,7 @@ void load_rom(char const *filename, CHIP8 *chip8) {
 
     fread(&chip8->mem[0x200], sizeof(uint8_t), buff_size, fptr);
     fclose(fptr);
-
+    // Test File Reading by print
     for (long i = 0; i < buff_size; i++) {
         printf("%02X ", chip8->mem[0x200 + i]);
         if ((i + 1) % 16 == 0) printf("\n");
@@ -42,14 +44,17 @@ void load_rom(char const *filename, CHIP8 *chip8) {
 
 
 
-// init Program counter
-void init_chip(CHIP8 *chip8){
-    chip8->pc = instr_start_adre;
 
 
-    for(uint8_t int  i= 0 , i<  )
-}
+//Get Rand num with time seed
+uint8_t rand_time(CHIP8 *c){
+    c-> randnum = c->randnum * 1103515245 + 12345;
+     return (c->randnum >> 16) & 0xFF;
+  
+   
 
+
+};
 
 //font array 
 uint8_t fontbytes[80]={
@@ -72,11 +77,30 @@ uint8_t fontbytes[80]={
 
 };
 
+// init all chip 8 mem values   
+void init_chip(CHIP8 *chip8){
+    chip8->pc = instr_start_adre;
+
+
+    for (unsigned int  i= 0 ; i < font_sz  ; ++i ){
+        chip8 ->mem[font_start_adre + i ] = fontbytes[i];
+    };
+
+
+
+    chip8->randnum = (uint8_t)time(NULL);
+    if (chip8->randnum == 0) chip8->randnum = 1; 
+};
+
+
+
+
 
 
 
 int main() {
     CHIP8 chip8;
+    
     load_rom("C:\\Users\\Moath\\Documents\\Projects\\CHIP8 EMU\\Space Intercept [Joseph Weisbecker, 1978].ch8", &chip8);
 
     return 0;
