@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <time.h>
+#include <string.h>
 
 typedef struct {
     uint8_t reg[16];
@@ -54,7 +55,7 @@ uint8_t rand_time(CHIP8 *c){
    
 
 
-};
+}
 
 //font array 
 uint8_t fontbytes[80]={
@@ -91,6 +92,27 @@ void init_chip(CHIP8 *chip8){
     chip8->randnum = (uint8_t)time(NULL);
     if (chip8->randnum == 0) chip8->randnum = 1; 
 };
+
+//Set all the OpCode Translation func
+//00E0:Clear Display
+
+void OP_00E0(CHIP8 *c){
+    memset(c ->video_gfx , 0,sizeof(c->video_gfx));
+
+};
+
+//00EE:RET
+void OP_00EE(CHIP8 *c){
+    --c-> sp ;
+    c->pc = c->stack[c-> sp];
+   
+}
+//1nnn:Jump to adress and set pc to to nnn
+void OP_1nnn(CHIP8 *c){
+    uint16_t addr = c->opcode &  0x0FFFu;
+    c -> pc = addr;
+
+}
 
 
 
