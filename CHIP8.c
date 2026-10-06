@@ -46,7 +46,7 @@ void load_rom(char const *filename, CHIP8 *chip8) {
 
 
 
-
+  
 //Get Rand num with time seed
 uint8_t rand_time(CHIP8 *c){
     c-> randnum = c->randnum * 1103515245 + 12345;
@@ -113,7 +113,51 @@ void OP_1nnn(CHIP8 *c){
     c -> pc = addr;
 
 }
+//2nnn call addr
+void OP_2nnn(CHIP8 *c){
+    uint16_t addr = c->opcode &  0x0FFFu;
+    c->stack[c->sp] = c->pc;
+    ++c->sp;
+    c->pc = addr;
+    
 
+}
+///3xkk skip instruc
+void OP_3xkk(CHIP8 *c){
+    uint8_t Vx = (c-> opcode & 0x0F00u) >> 8u;
+    uint8_t byte_fetch = c->opcode & 0x00FFu;
+    if (c->reg[Vx] == byte_fetch){
+        c->pc += 2;
+    }
+
+
+}
+//4xkk same as last ins but reg[Vx] != kk
+void OP_4xkk(CHIP8 *c){
+    uint8_t Vx = (c-> opcode & 0x0F00u) >> 8u;
+    uint8_t byte_fetch = c->opcode & 0x00FFu;
+    if (c->reg[Vx] != byte_fetch){
+        c->pc += 2;
+    }
+
+
+}
+//5xy0 again but this time when reg[Vx] == reg[vy]
+ void OP_5xy0(CHIP8 *c){
+    uint8_t Vx = (c-> opcode & 0x0F00u) >> 8u;
+    uint8_t Vy = (c->opcode & 0x00F0u) >> 4u;
+    if (c->reg[Vx] == c->reg[Vy]){
+        c->pc += 2;
+    }
+
+
+}
+//6xkk set reg[Vx] = byte
+void OP_6xkk(CHIP8 *c){
+    uint8_t Vx = (c-> opcode & 0x0F00u ) >> 8u;
+    uint8_t byte_fetch = c->opcode & 0x00FFu;
+    c->reg[Vx] = byte_fetch;
+}
 
 
 
