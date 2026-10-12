@@ -158,10 +158,63 @@ void OP_6xkk(CHIP8 *c){
     uint8_t byte_fetch = c->opcode & 0x00FFu;
     c->reg[Vx] = byte_fetch;
 }
+//7xkk add Vx to Byte
+void OP_7xkk(CHIP8 *c){
+    uint8_t Vx = (c-> opcode & 0x0F00u ) >> 8u;
+    uint8_t byte_fetch = c->opcode & 0x00FFu;
+    c -> reg[Vx] += byte_fetch;
+}
+//8xy0 set Vx = Vy
+void OP_8xy0(CHIP8 *c){
+    uint8_t Vx = (c ->opcode & 0x0F00u) >> 8u;
+	uint8_t Vy = (c ->opcode & 0x00F0u) >> 4u;
+    c->reg[Vx] = c->reg[Vy];
 
+}
+//8xy1  bitwise or on Vx an Vy store Vx
+void OP_8xy1(CHIP8 *c){
+    uint8_t Vx = (c ->opcode & 0x0F00u) >> 8u;
+	uint8_t Vy = (c ->opcode & 0x00F0u) >> 4u;
+    c-> reg[Vx] |= c-> reg[Vy];
+}
+//8xy2 bitwise and on Vx an Vy store Vx
+void OP_8xy2(CHIP8 *c){
+    uint8_t Vx = (c ->opcode & 0x0F00u) >> 8u;
+	uint8_t Vy = (c ->opcode & 0x00F0u) >> 4u;
+    c->reg[Vx] &= c->reg[Vy];
 
+}
+//8xy3 bitwise XOR on Vx an Vy store Vx
+void OP_8xy3(CHIP8 *c){
+    uint8_t Vx = (c ->opcode & 0x0F00u) >> 8u;
+	uint8_t Vy = (c ->opcode & 0x00F0u) >> 4u;
+    c->reg[Vx] ^= c->reg[Vy];
+}
+//8xy4 Add Vx,Vy Vf =carry if value more than 1 byte 
+void OP_8xy4(CHIP8 *c){
+    uint8_t Vx = (c ->opcode & 0x0F00u) >> 8u;
+	uint8_t Vy = (c ->opcode & 0x00F0u) >> 4u;
+    uint16_t sum  = c -> reg[Vx]+c->reg[Vy];
+    if (sum > 255u){
+        c->reg[0xF] = 1;
+    }
+    else{
+        c->reg[0xF] = 0;
 
-
+    }    
+    c -> reg[Vx] =sum & 0xFFu;
+}
+//8xy5 sub Vx,Vy Vf =borrow  if value less than 1 byte
+void OP_8xy5(CHIP8 *c){
+    uint8_t Vx = (c ->opcode & 0x0F00u) >> 8u;
+	uint8_t Vy = (c ->opcode & 0x00F0u) >> 4u;
+    if (c->reg[Vx]>c->reg[Vy]){
+        c->reg[0xF] = 1;
+    }else{
+        c->reg[0xF] = 0;
+    }
+    c->reg[Vx]-=c->reg[Vy];
+}
 
 
 int main() {
