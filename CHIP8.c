@@ -215,6 +215,13 @@ void OP_8xy5(CHIP8 *c){
     }
     c->reg[Vx]-=c->reg[Vy];
 }
+//8xy6 set reg Vx to Vx SHR 1 and if least sig bit is 1 Vf should be raised
+void OP_8xy6(CHIP8 *c){
+    uint8_t Vx = (c ->opcode & 0x0F00u) >> 8u;
+    c-> reg[0xF] = (c -> reg[Vx] & 0x1u );
+    c->reg[Vx] >>= 1 ;
+	
+}
 
 
 int main() {
