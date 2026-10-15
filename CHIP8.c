@@ -8,6 +8,7 @@ typedef struct {
     uint8_t reg[16];
     uint8_t mem[4096];
     uint16_t pc;
+    uint16_t index;
     uint8_t sp; //stack pointer
     uint16_t stack[16];
     uint8_t delay_timer;
@@ -222,7 +223,38 @@ void OP_8xy6(CHIP8 *c){
     c->reg[Vx] >>= 1 ;
 	
 }
+//8xy7 set vx = Vy - Vx and Vf is flagged when Vx>= Vy
+void OP_8xy7(CHIP8 *c){
+    uint8_t Vx = (c ->opcode & 0x0F00u) >> 8u;
+	uint8_t Vy = (c ->opcode & 0x00F0u) >> 4u;
 
+    if (c-> reg[Vx] > c-> reg[Vy]){
+        c->reg[0xF] = 1;
+    }else{
+        c->reg[0xF] = 0;
+    }
+    c->reg[Vx] = c->reg[Vy] - c->reg[Vx];
+}
+//8xyE LSB Vx by 1 and set Vf to 1 if the least sig bit prior to the shift was up
+void OP_8xyE(CHIP8 *c){
+    uint8_t Vx = (c ->opcode & 0x0F00u) >> 8u;
+    c->reg[0xF] = (c-> reg[Vx] & 0x80u) >> 7u;
+    c->reg[Vx] <<= 1;
+}
+//9xy0 skip to the next instruction if Vx != Vy
+void OP_9xy0(CHIP8 *c){
+    uint8_t Vx = (c ->opcode & 0x0F00u) >> 8u;
+	uint8_t Vy = (c ->opcode & 0x00F0u) >> 4u;
+    if (c-> reg[Vx] != c-> reg[Vy]){
+        c->pc += 2;
+
+    }    
+}
+//ANNN set adreess I to NNN
+void OP_ANNN(CHIP8 *c){
+    uint16_t address = c->opcode & 0x0FFFu ;
+    c-> index = address;
+}
 
 int main() {
     CHIP8 chip8;
