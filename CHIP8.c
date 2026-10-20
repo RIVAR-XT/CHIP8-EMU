@@ -4,6 +4,12 @@
 #include <time.h>
 #include <string.h>
 
+
+
+#define VIDEO_WIDTH  64
+#define VIDEO_HEIGHT 32
+
+
 typedef struct {
     uint8_t reg[16];
     uint8_t mem[4096];
@@ -14,9 +20,11 @@ typedef struct {
     uint8_t delay_timer;
     uint8_t sound_timer;
     uint8_t keypad[16];
-    uint32_t video_gfx[64 * 32];
+    uint8_t Height;
+    uint8_t Width;
+    uint32_t video_gfx[VIDEO_WIDTH * VIDEO_HEIGHT];
     uint16_t opcode;
-    uint32_t randnum;
+    uint32_t randnum; //seed for equa
 } CHIP8;
 
 //start adresses 
@@ -52,9 +60,6 @@ void load_rom(char const *filename, CHIP8 *chip8) {
 uint8_t rand_time(CHIP8 *c){
     c-> randnum = c->randnum * 1103515245 + 12345;
      return (c->randnum >> 16) & 0xFF;
-  
-   
-
 
 }
 
@@ -255,6 +260,48 @@ void OP_ANNN(CHIP8 *c){
     uint16_t address = c->opcode & 0x0FFFu ;
     c-> index = address;
 }
+//Bnnn jump to instruc in adress nnn+V0
+void OP_BNNN(CHIP8 *c){
+    uint16_t adress = c->opcode & 0x0FFFu;
+    c->pc = c->reg[0]+adress;
+}
+//CxNN set reg Vx to random byte & NN
+void OP_CxNN(CHIP8 *c){
+    uint8_t Vx = (c->opcode & 0x0F00u)>>8u;
+    uint8_t byte = c->opcode & 0x00FFu;
+    c->reg[Vx]=rand_time(c) & byte;
+}
+//Dxyn display the sprites on the 8 by 8 screen using mem Vx to Vy id 2 pixels collide Vf=colision 
+void Dxyn(CHIP8 *c){
+    uint8_t Vx = (c ->opcode & 0x0F00u) >> 8u;
+	uint8_t Vy = (c ->opcode & 0x00F0u) >> 4u;
+    uint8_t height = c->opcode & 0x000Fu;
+
+    uint8_t xpos = c->reg[Vx] % VIDEO_WIDTH;
+    uint8_t ypos = c->reg[Vy] % VIDEO_HEIGHT;
+
+
+    c->reg[0xF] = 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 int main() {
     CHIP8 chip8;
