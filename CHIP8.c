@@ -282,6 +282,26 @@ void Dxyn(CHIP8 *c){
 
 
     c->reg[0xF] = 0;
+
+
+
+
+    for (unsigned int row = 0  ; row < height ; row++ ){
+        uint8_t spritebyte = c->mem[c->index + row];
+        for (unsigned int col = 0 ; col < 8 ; col++  ){
+            uint8_t spritepixel = spritebyte & (0x80u>>col);
+            uint32_t* gfx_pixel = &c->video_gfx[(ypos + row) * VIDEO_WIDTH +(xpos +col)];
+
+            if (spritepixel){
+                if (*gfx_pixel==0xFFFFFFFF){
+                    c->reg[0xF] =1;
+
+                }
+
+                *gfx_pixel ^=  0xFFFFFFFF;
+            }
+        }
+    }
 }
 
 
