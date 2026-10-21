@@ -304,6 +304,25 @@ void Dxyn(CHIP8 *c){
     }
 }
 
+//Ex9E skip to next ins if key is pressed   
+void OP_Ex9E(CHIP8 *c){
+    uint8_t Vx = (c->opcode & 0x0F00u) >> 8u;
+    uint8_t key = c->reg[Vx];
+    if (c->keypad[key]){
+        c->pc += 2;
+    }
+
+}
+//ExA1 skip next ins if key value is false or not pressed
+void OP_ExA1(CHIP8 *c){
+    uint8_t Vx = (c->opcode & 0x0F00u) >> 8u;
+    uint8_t key = c->reg[Vx];
+
+    if (!c->keypad[key]){
+        c->pc+=2;
+    }
+}
+
 
 
 
