@@ -45,7 +45,7 @@ void load_rom(char const *filename, CHIP8 *chip8) {
     fread(&chip8->mem[0x200], sizeof(uint8_t), buff_size, fptr);
     fclose(fptr);
     // Test File Reading by print
-    for (long i = 0; i < buff_size; i++) {
+    for (long i = 0; i < buff_size; ++i) {
         printf("%02X ", chip8->mem[0x200 + i]);
         if ((i + 1) % 16 == 0) printf("\n");
     }
@@ -286,9 +286,9 @@ void Dxyn(CHIP8 *c){
 
 
 
-    for (unsigned int row = 0  ; row < height ; row++ ){
+    for (unsigned int row = 0  ; row < height ; ++row ){
         uint8_t spritebyte = c->mem[c->index + row];
-        for (unsigned int col = 0 ; col < 8 ; col++  ){
+        for (unsigned int col = 0 ; col < 8 ; ++col  ){
             uint8_t spritepixel = spritebyte & (0x80u>>col);
             uint32_t* gfx_pixel = &c->video_gfx[(ypos + row) * VIDEO_WIDTH +(xpos +col)];
 
@@ -322,15 +322,122 @@ void OP_ExA1(CHIP8 *c){
         c->pc+=2;
     }
 }
+//Fx07 load Vx , Delay timer
+void OP_Fx07(CHIP8 *c){
+    uint8_t Vx = (c->opcode & 0x0F00u) >> 8u;
+    c->reg[Vx]=c->delay_timer;
+}
+//Fx0A load key reg into Vx key
+void OP_Fx0A(CHIP8 *c){
+    uint8_t Vx = (c->opcode & 0x0F00u) >> 8u;
+    if (c->keypad[0]){
+        c->reg[Vx]=0;
+
+    }else if(c->keypad[1]){
+        c->reg[Vx]=1;
+
+    }else if (c->keypad[2]){
+        c->reg[Vx]=2;
+
+    }else if (c->keypad[3]){
+        c->reg[Vx]=3;
+        
+    }else if (c->keypad[4]){
+        c->reg[Vx]=4;
+
+    }else if (c->keypad[5]){
+        c->reg[Vx]=5;
+
+    }else if (c->keypad[6]){
+        c->reg[Vx]=6;
+
+    }else if (c->keypad[7]){
+        c->reg[Vx]=7;
+
+    }else if (c->keypad[8]){
+        c->reg[Vx]=8;
+
+    }else if (c->keypad[9]){
+        c->reg[Vx]=9;
+
+    }else if (c->keypad[10]){
+        c->reg[Vx]=10;
+
+    }else if (c->keypad[11]){
+        c->reg[Vx]=11;
+
+    }else if (c->keypad[12]){
+        c->reg[Vx]=12;
+
+    }else if (c->keypad[13]){
+        c->reg[Vx]=13;
+
+    }else if (c->keypad[14]){
+        c->reg[Vx]=14;
+
+    }else if (c->keypad[15])
+    {
+        c->reg[Vx]=15;
+    }else{
+        c->pc -=2;
+    }
+
+    
+
+}
+//Fx15 set DT= Vx
+void OP_Fx15(CHIP8 *c){
+    uint8_t Vx = (c->opcode & 0x0F00u) >> 8u;
+    c->delay_timer = c->reg[Vx];
+}
+//Fx18 set ST = Vx
+void OP_Fx18(CHIP8 *c){
+    uint8_t Vx = (c->opcode & 0x0F00u) >> 8u;
+    c->sound_timer = c->reg[Vx];
+
+}
+//Fx1E Add Index, Vx
+void OP_Fx1E(CHIP8 *c){
+    uint8_t Vx = (c->opcode & 0x0F00u) >> 8u;
+    c->index += c->reg[Vx];
+
+}
+//Fx29 load F , Vx
+void OP_Fx29(CHIP8 *c){
+    uint8_t Vx = (c->opcode & 0x0F00u) >> 8u;
+    uint8_t digit = c->reg[Vx];
+
+    c->index = font_start_adre +(5*digit);
+}
+//Fx33 store decimal values of Vx in i , I+1 , I=2
+void OP_Fx33(CHIP8 *c){
+    uint8_t Vx = (c->opcode & 0x0F00u) >> 8u;
+    uint8_t valueVx = c->reg[Vx];
+
+    c->mem[c->index+2]=valueVx % 10;
+    valueVx /=10;
+    c->mem[c->index+1]=valueVx % 10 ;
+    valueVx/=10;
+    c->mem[c->index] = valueVx % 10 ;
+
+}
+//Fx55 LD reg[V0]->reg[Vx] starting at i 
+void OP_Fx55(CHIP8 *c){
+    uint8_t Vx = (c->opcode & 0x0F00u) >> 8u;
 
 
+    for (uint8_t i = 0 ; i<=Vx ; ++i){
+        c->reg[i] = c->mem[c->index+i];
 
-
-
-
-
-
-
+    }
+}
+// Fx65 rad through reg[v0]->reg[Vx] from mem to loc I
+void OP_Fx65(CHIP8 *c){
+    uint8_t Vx = (c->opcode & 0x0F00u) >> 8u;
+    for (uint8_t i = 0 ; i <= Vx ; ++i){
+        c->reg[i]= c->mem[c->index +i];
+    }
+}
 
 
 
