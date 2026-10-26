@@ -10,6 +10,9 @@
 #define VIDEO_HEIGHT 32
 
 
+
+
+
 typedef struct {
     uint8_t reg[16];
     uint8_t mem[4096];
@@ -25,7 +28,21 @@ typedef struct {
     uint32_t video_gfx[VIDEO_WIDTH * VIDEO_HEIGHT];
     uint16_t opcode;
     uint32_t randnum; //seed for equa
+
+
+
+
+    //tables for func pointers
+    chip8func table[0xF + 1];
+    chip8func table0[0xE + 1];
+    chip8func table1[0xE + 1];
+    chip8func table8[0xE + 1];
+    chip8func tableE[0xE + 1];
+    chip8func tableF[0x65 + 1];
 } CHIP8;
+
+
+typedef void (*chip8func) (CHIP8 *c);
 
 //start adresses 
 const unsigned instr_start_adre = 0x200;
@@ -52,7 +69,7 @@ void load_rom(char const *filename, CHIP8 *chip8) {
     printf("\n");
 }    
 
-
+ 
 
 
   
@@ -84,20 +101,6 @@ uint8_t fontbytes[80]={
 
 };
 
-// init all chip 8 mem values   
-void init_chip(CHIP8 *chip8){
-    chip8->pc = instr_start_adre;
-
-
-    for (unsigned int  i= 0 ; i < font_sz  ; ++i ){
-        chip8 ->mem[font_start_adre + i ] = fontbytes[i];
-    };
-
-
-
-    chip8->randnum = (uint8_t)time(NULL);
-    if (chip8->randnum == 0) chip8->randnum = 1; 
-};
 
 //Set all the OpCode Translation func
 //00E0:Clear Display
@@ -265,14 +268,14 @@ void OP_BNNN(CHIP8 *c){
     uint16_t adress = c->opcode & 0x0FFFu;
     c->pc = c->reg[0]+adress;
 }
-//CxNN set reg Vx to random byte & NN
-void OP_CxNN(CHIP8 *c){
+//CxKK set reg Vx to random byte & NN
+void OP_CxKK(CHIP8 *c){
     uint8_t Vx = (c->opcode & 0x0F00u)>>8u;
     uint8_t byte = c->opcode & 0x00FFu;
     c->reg[Vx]=rand_time(c) & byte;
 }
 //Dxyn display the sprites on the 8 by 8 screen using mem Vx to Vy id 2 pixels collide Vf=colision 
-void Dxyn(CHIP8 *c){
+void OP_Dxyn(CHIP8 *c){
     uint8_t Vx = (c ->opcode & 0x0F00u) >> 8u;
 	uint8_t Vy = (c ->opcode & 0x00F0u) >> 4u;
     uint8_t height = c->opcode & 0x000Fu;
@@ -439,8 +442,101 @@ void OP_Fx65(CHIP8 *c){
     }
 }
 
+    //finder setup sub dispatcher
+    void Table0(CHIP8 *c){
+        c->table0[c->opcode & 0x000Fu](c);
+    }
+    void Table8(CHIP8 *c){
+        c->table8[c->opcode & 0x000Fu](c);
+    }
+    void TableE(CHIP8 *c){
+        c->tableE[c->opcode  & 0x000Fu](c);
+    }
+    void TableF(CHIP8 *c){
+        c->tableF[c->opcode &  0x00FFu](c);
+    }
+    void OP_NULL(){}
 
 
+
+// init all chip 8 mem values   
+void init_chip(CHIP8 *c){
+    c->pc = instr_start_adre;
+
+
+    for (unsigned int  i= 0 ; i < font_sz  ; ++i ){
+        c ->mem[font_start_adre + i ] = fontbytes[i];
+    };
+
+
+
+    c->randnum = (uint8_t)time(NULL);
+    if (c->randnum == 0) c->randnum = 1; 
+
+    //pointer table setup 
+    c->table[0x0] = Table0; 
+    c->table[0x1] =OP_1nnn;
+    c->table[0x2] =OP_2nnn;
+    c->table[0x3] =OP_3xkk;
+    c->table[0x4] =OP_4xkk;
+    c->table[0x5] =OP_5xy0;
+    c->table[0x6] =OP_6xkk;
+    c->table[0x7] =OP_7xkk;
+    c->table[0x8] =Table8;
+    c->table[0x9] =OP_9xy0;
+    c->table[0xA] =OP_ANNN;
+    c->table[0xB] =OP_BNNN;
+    c->table[0xC] =OP_CxKK;
+    c->table[0xD] =OP_Dxyn;
+    c->table[0xE] =TableE;
+    c->table[0xF] =TableF;
+
+    for (size_t i = 0 ; i <= 0xE ; i++){
+        c->table0[i] = OP_NULL;
+        c->table8[i] = OP_NULL;
+        c->tableE[i] = OP_NULL;
+    }
+
+
+
+    c->table0[0x0] = OP_00E0;
+    c->table0[0xE] = OP_00EE;
+
+    c->table8[0x0] =OP_8xy0;
+    c->table8[0x1] =OP_8xy1;
+    c->table8[0x2] =OP_8xy2;
+    c->table8[0x3] =OP_8xy3;
+    c->table8[0x4] =OP_8xy4;
+    c->table8[0x5] =OP_8xy5;
+    c->table8[0x6] =OP_8xy6;
+    c->table8[0x7] =OP_8xy7;
+    c->table8[0xE] =OP_8xyE;
+
+
+    c->tableE[0x1] = OP_ExA1;
+    c->tableE[0xE] = OP_Ex9E;
+
+
+    for (size_t i = 0 ; i <= 0x65 ; i++){
+        c->tableE[i]=OP_NULL;
+    }
+
+
+    c->tableF[0x07]=OP_Fx07;
+    c->tableF[0x0A]=OP_Fx0A;
+    c->tableF[0x15]=OP_Fx15;
+    c->tableF[0x18]=OP_Fx18;
+    c->tableF[0x1E]=OP_Fx1E;
+    c->tableF[0x29]=OP_Fx29;
+    c->tableF[0x33]=OP_Fx33;
+    c->tableF[0x55]=OP_Fx55;
+    c->tableF[0x65]=OP_Fx65;
+
+
+
+
+
+};
 
 
 
