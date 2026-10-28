@@ -3,17 +3,22 @@
 #include <stdint.h>
 #include <time.h>
 #include <string.h>
+#include <SDL3/SDL.h>
+
 
 
 
 #define VIDEO_WIDTH  64
 #define VIDEO_HEIGHT 32
 
+typedef struct CHIP8 CHIP8;
+typedef void (*chip8func) (CHIP8 *c);
 
 
 
 
-typedef struct {
+
+struct CHIP8{
     uint8_t reg[16];
     uint8_t mem[4096];
     uint16_t pc;
@@ -39,10 +44,10 @@ typedef struct {
     chip8func table8[0xE + 1];
     chip8func tableE[0xE + 1];
     chip8func tableF[0x65 + 1];
-} CHIP8;
+};
 
 
-typedef void (*chip8func) (CHIP8 *c);
+
 
 //start adresses 
 const unsigned instr_start_adre = 0x200;
@@ -108,7 +113,7 @@ uint8_t fontbytes[80]={
 void OP_00E0(CHIP8 *c){
     memset(c ->video_gfx , 0,sizeof(c->video_gfx));
 
-};
+}
 
 //00EE:RET
 void OP_00EE(CHIP8 *c){
@@ -455,10 +460,29 @@ void OP_Fx65(CHIP8 *c){
     void TableF(CHIP8 *c){
         c->tableF[c->opcode &  0x00FFu](c);
     }
-    void OP_NULL(){}
+    void OP_NULL(CHIP8 *c){(void)c;}
 
 
+//FDE Cycle 
+void Cycle(CHIP8 *c){
+    //Fetch
+    c->opcode = (c->mem[c->pc] << 8u ) | c->mem[c->pc+1];
+    //inc pc
+    c->pc += 2 ;
 
+    //decode 
+    c->table[(c->opcode & 0xF000u) >> 12u](c);
+
+    //dec the delay timer
+    if (c->delay_timer>0){
+        --c->delay_timer;
+    }
+    //dec sound timer
+    if (c->sound_timer>0){
+        --c->sound_timer;
+    }
+
+}
 // init all chip 8 mem values   
 void init_chip(CHIP8 *c){
     c->pc = instr_start_adre;
@@ -518,7 +542,7 @@ void init_chip(CHIP8 *c){
 
 
     for (size_t i = 0 ; i <= 0x65 ; i++){
-        c->tableE[i]=OP_NULL;
+        c->tableF[i]=OP_NULL;
     }
 
 
@@ -536,19 +560,10 @@ void init_chip(CHIP8 *c){
 
 
 
-};
-
-
-
-
-
-
-
-
-int main() {
-    CHIP8 chip8;
-    
-    load_rom("C:\\Users\\Moath\\Documents\\Projects\\CHIP8 EMU\\Space Intercept [Joseph Weisbecker, 1978].ch8", &chip8);
-
-    return 0;
 }
+
+
+
+
+
+
