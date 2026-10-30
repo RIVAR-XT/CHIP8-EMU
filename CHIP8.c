@@ -12,8 +12,17 @@
 #define VIDEO_HEIGHT 32
 
 typedef struct CHIP8 CHIP8;
+typedef struct platform platform;
+
+
 typedef void (*chip8func) (CHIP8 *c);
 
+
+struct platform{
+    SDL_Window *window ;
+    SDL_Texture *texture;
+    SDL_Renderer *Renderer;
+};
 
 
 
@@ -564,6 +573,47 @@ void init_chip(CHIP8 *c){
 
 
 
+bool Platform_ini(platform *p , const char title , int windoww , int windowh , int textw , int texth){
+    if (!SDL_Init(SDL_INIT_VIDEO))
+    {
+       SDL_Log("SDL init failure : %s", SDL_GetError());
+       return false;
+    }
+    p->window = SDL_CreateWindow(title , windoww , windowh , 0);
+    if(!p->window){
+         SDL_Log("Window failure : %s", SDL_GetError());
+         return false;
+    }
+    p->Renderer = SDL_CreateRenderer(p->window , NULL);
+    if (!p->Renderer){
+        SDL_Log("Renderer failure : %s", SDL_GetError());
+    }
+    p->texture = SDL_CreateTexture(p->Renderer , SDL_PIXELFORMAT_RGBA8888 , SDL_TEXTUREACCESS_STREAMING , textw , texth);
+    if(p->texture){
+        SDL_Log("Texture loading failure : %s", SDL_GetError());
+        return false;
+    }
 
 
+    SDL_SetTextureScaleMode(p->texture , SDL_SCALEMODE_NEAREST);
+    return true;
+
+
+
+
+};
+
+void exitcleanplat(platform *p){
+    SDL_DestroyTexture(p->texture);
+    SDL_DestroyRenderer(p->Renderer);
+    SDL_DestroyWindow(p->window);
+    SDL_Quit();
+}
+
+void update_pt(platform *p ,const void *buffer , int pitch){
+    SDL_UpdateTexture(p->texture , NULL , buffer , pitch);
+    SDL_RenderClear(p->Renderer);
+    SDL_RenderTexture(p->Renderer , p->texture , NULL , NULL);
+    SDL_RenderPresent(p->Renderer);
+}
 
