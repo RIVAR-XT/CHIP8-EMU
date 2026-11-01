@@ -608,12 +608,74 @@ void exitcleanplat(platform *p){
     SDL_DestroyRenderer(p->Renderer);
     SDL_DestroyWindow(p->window);
     SDL_Quit();
-}
+};
 
 void update_pt(platform *p ,const void *buffer , int pitch){
     SDL_UpdateTexture(p->texture , NULL , buffer , pitch);
     SDL_RenderClear(p->Renderer);
     SDL_RenderTexture(p->Renderer , p->texture , NULL , NULL);
     SDL_RenderPresent(p->Renderer);
-}
+};
 
+bool processinput(uint8_t *keys){
+    bool Quit = false;
+    SDL_Event event;
+
+
+    while (SDL_PollEvent(&event)){
+        switch (event.type){
+            case SDL_EVENT_QUIT: Quit = true; break;
+            case SDL_EVENT_KEY_DOWN: 
+               switch (event.key.key)
+               {
+                case SDLK_ESCAPE:
+                case SDLK_X:
+                case SDLK_1:
+                case SDLK_2:
+                case SDLK_3:
+                case SDLK_Q:
+                case SDLK_W:
+                case SDLK_E:
+                case SDLK_A:
+                case SDLK_S:
+                case SDLK_D:
+                case SDLK_Z:
+                case SDLK_C:
+                case SDLK_4:
+                case SDLK_R:
+                case SDLK_F:
+                case SDLK_V:
+               }
+               break;
+            case SDL_EVENT_KEY_UP:
+                switch (event.key.key)
+                {
+                case SDLK_ESCAPE:
+                case SDLK_X:
+                case SDLK_1:
+                case SDLK_2:
+                case SDLK_3:
+                case SDLK_Q:
+                case SDLK_W:
+                case SDLK_E:
+                case SDLK_A:
+                case SDLK_S:
+                case SDLK_D:
+                case SDLK_Z:
+                case SDLK_C:
+                case SDLK_4:
+                case SDLK_R:
+                case SDLK_F:
+                case SDLK_V:
+                }
+                break;
+
+        }
+      
+
+    }
+    return Quit;  
+            
+        
+    
+};
