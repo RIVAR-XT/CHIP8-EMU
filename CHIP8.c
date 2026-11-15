@@ -76,10 +76,12 @@ void load_rom(char const *filename, CHIP8 *chip8) {
     fread(&chip8->mem[0x200], sizeof(uint8_t), buff_size, fptr);
     fclose(fptr);
     // Test File Reading by print
-    for (long i = 0; i < buff_size; ++i) {
-        printf("%02X ", chip8->mem[0x200 + i]);
-        if ((i + 1) % 16 == 0) printf("\n");
+    if (fptr == NULL) {
+       perror(filename);
+       exit(1);
     }
+
+    
     printf("\n");
 }    
 
@@ -573,7 +575,7 @@ void init_chip(CHIP8 *c){
 
 
 
-bool Platform_ini(platform *p , const char title , int windoww , int windowh , int textw , int texth){
+bool Platform_ini(platform *p , const char *title , int windoww , int windowh , int textw , int texth){
     if (!SDL_Init(SDL_INIT_VIDEO))
     {
        SDL_Log("SDL init failure : %s", SDL_GetError());
@@ -587,9 +589,10 @@ bool Platform_ini(platform *p , const char title , int windoww , int windowh , i
     p->Renderer = SDL_CreateRenderer(p->window , NULL);
     if (!p->Renderer){
         SDL_Log("Renderer failure : %s", SDL_GetError());
+        return false;
     }
     p->texture = SDL_CreateTexture(p->Renderer , SDL_PIXELFORMAT_RGBA8888 , SDL_TEXTUREACCESS_STREAMING , textw , texth);
-    if(p->texture){
+    if(!p->texture){
         SDL_Log("Texture loading failure : %s", SDL_GetError());
         return false;
     }
@@ -626,47 +629,44 @@ bool processinput(uint8_t *keys){
         switch (event.type){
             case SDL_EVENT_QUIT: Quit = true; break;
             case SDL_EVENT_KEY_DOWN: 
-               switch (event.key.key)
-               {
-                case SDLK_ESCAPE:
-                case SDLK_X:
-                case SDLK_1:
-                case SDLK_2:
-                case SDLK_3:
-                case SDLK_Q:
-                case SDLK_W:
-                case SDLK_E:
-                case SDLK_A:
-                case SDLK_S:
-                case SDLK_D:
-                case SDLK_Z:
-                case SDLK_C:
-                case SDLK_4:
-                case SDLK_R:
-                case SDLK_F:
-                case SDLK_V:
-               }
-               break;
+                 switch (event.key.key){
+                     case SDLK_ESCAPE: Quit = true; break;
+                     case SDLK_X: keys[0] = 1; break;
+                     case SDLK_1: keys[1] = 1; break;
+                     case SDLK_2: keys[2] = 1 ; break;
+                     case SDLK_3: keys[3] = 1 ; break;
+                     case SDLK_Q: keys[4] = 1; break;
+                     case SDLK_W: keys[5] = 1 ; break;
+                     case SDLK_E: keys[6] =1 ; break;
+                     case SDLK_A: keys[7]=1; break;
+                     case SDLK_S: keys[8] =1 ; break;
+                     case SDLK_D: keys[9] =1 ; break;
+                     case SDLK_Z: keys[0xA] =1 ; break;
+                     case SDLK_C: keys[0xB] =1 ; break;
+                     case SDLK_4: keys[0xC] =1 ; break;
+                     case SDLK_R: keys[0xD] =1 ; break;
+                     case SDLK_F: keys[0xE] = 1 ; break;
+                     case SDLK_V: keys[0xF] =1 ; break;
+                    } break;
             case SDL_EVENT_KEY_UP:
                 switch (event.key.key)
                 {
-                case SDLK_ESCAPE:
-                case SDLK_X:
-                case SDLK_1:
-                case SDLK_2:
-                case SDLK_3:
-                case SDLK_Q:
-                case SDLK_W:
-                case SDLK_E:
-                case SDLK_A:
-                case SDLK_S:
-                case SDLK_D:
-                case SDLK_Z:
-                case SDLK_C:
-                case SDLK_4:
-                case SDLK_R:
-                case SDLK_F:
-                case SDLK_V:
+                     case SDLK_X:keys[0] = 0; break;
+                     case SDLK_1:keys[1] = 0; break;
+                     case SDLK_2:keys[2] = 0; break;
+                     case SDLK_3:keys[3] = 0; break;
+                     case SDLK_Q:keys[4] = 0; break;
+                     case SDLK_W:keys[5] = 0; break;
+                     case SDLK_E:keys[6] = 0; break;
+                     case SDLK_A:keys[7] = 0; break;
+                     case SDLK_S:keys[8] = 0; break;
+                     case SDLK_D:keys[9] = 0; break;
+                     case SDLK_Z:keys[0xA] = 0; break;
+                     case SDLK_C:keys[0xB] = 0; break;
+                     case SDLK_4:keys[0xC] = 0; break;
+                     case SDLK_R:keys[0xD] = 0; break;
+                     case SDLK_F:keys[0xE] = 0; break;
+                     case SDLK_V:keys[0xF] = 0; break;
                 }
                 break;
 
@@ -679,3 +679,63 @@ bool processinput(uint8_t *keys){
         
     
 };
+
+
+
+
+
+int main(int argc , char **argv){
+    if (argc != 4){
+        fprintf(stderr , "Usage: %s <Scale> <Delay> <ROM>\n" ,argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+
+    int videos = atoi(argv[1]);
+    int cycleD = atoi(argv[2]);
+    const char* Romfile = argv[3];
+
+
+    platform plat;
+    Platform_ini(&plat , "Chip-8 Emulator" , VIDEO_WIDTH * videos , VIDEO_HEIGHT * videos , VIDEO_WIDTH , VIDEO_HEIGHT);
+
+
+    CHIP8 chip8 ={0};
+    init_chip(&chip8);
+    load_rom(Romfile , &chip8);
+
+    int videoPitch = sizeof(chip8.video_gfx[0]) *VIDEO_WIDTH;
+
+
+    uint64_t lastcy = SDL_GetTicks();
+    bool quit = false;
+
+
+    while (!quit)
+    {
+        quit = processinput(chip8.keypad);
+
+
+        uint64_t now = SDL_GetTicks();
+        
+        
+        float deltatime = now - lastcy;
+
+
+
+        if (deltatime> cycleD){
+            lastcy = now;
+
+            Cycle(&chip8);
+
+
+            update_pt(&plat , chip8.video_gfx , videoPitch );
+        }
+    }
+
+
+    return 0;
+    
+
+
+}
